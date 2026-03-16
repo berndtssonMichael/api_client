@@ -1,11 +1,14 @@
+from pathlib import Path
 from api_client import ApiClient
 
-client = ApiClient("config.json")
+# Config läggs lokalt i respektive mapp och synkas inte till git.
+# Kopiera config.template.json till din mapp och döp om till config.json.
+client = ApiClient(Path(__file__).parent / "config.json")
 
 # --- Connect to database ---
 client.connect_db()
 
-# --- Authenticate (choose one) ---
+# --- Authenticate (välj en) ---
 client.auth_teamhub()
 # client.auth_api_key()
 # client.auth_bearer_token()
@@ -20,26 +23,26 @@ client.auth_teamhub()
 # --- Set target table ---
 client.table_name = "api_import"
 
-# --- Fetch data (choose one) ---
+# --- Fetch data (välj en) ---
 
 # Single request
 rows = client.fetch(
-    url="https://api.goteamhub.com/api/some-endpoint",
+    url="https://api.example.com/some-endpoint",
     row_key="values"
 )
 
 # Paged – follows 'next-page' response header
-rows = client.fetch_paged_by_header(
-    url="https://api.goteamhub.com/api/some-endpoint",
-    row_key="values"
-)
+# rows = client.fetch_paged_by_header(
+#     url="https://api.example.com/some-endpoint",
+#     row_key="values"
+# )
 
 # Paged – uses ?page= param and reads total from response
-rows = client.fetch_paged_by_count(
-    url="https://api.goteamhub.com/api/some-endpoint",
-    row_key="values",
-    pages_key="pages"
-)
+# rows = client.fetch_paged_by_count(
+#     url="https://api.example.com/some-endpoint",
+#     row_key="values",
+#     pages_key="pages"
+# )
 
 # --- Create table and insert rows ---
 client.run(rows)

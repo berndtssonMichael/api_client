@@ -16,6 +16,8 @@ class ApiClient:
         self._db_cfg  = cfg["database"]
         self._api_cfg = cfg["api"]
 
+        self.base_url:   str  = self._api_cfg.get("base_url", "")
+        self.schema:     str  = self._db_cfg.get("schema_name", "dbo")
         self.table_name: str  = None
         self._headers:   dict = {"Accept": "application/json"}
         self._auth:      tuple = None  # used for basic auth
@@ -39,7 +41,16 @@ class ApiClient:
         )
         self._conn   = pyodbc.connect(conn_str)
         self._cursor = self._conn.cursor()
+        self._ensure_schema()
         print("Database connection established.")
+
+    def _ensure_schema(self):
+        """Creates the schema if it does not already exist."""
+        self._cursor.execute(
+            f"IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{self.schema}') "
+            f"EXEC('CREATE SCHEMA [{self.schema}]')"
+        )
+        self._conn.commit()
 
     def disconnect_db(self):
         """Closes the database connection."""
@@ -69,7 +80,8 @@ class ApiClient:
     def auth_teamhub(self):
         """
         Authenticates against the GoTeamHub API.
-        POSTs credentials and stores the returned token as a bearer token.
+        POSTs credentials and stores the returned token and email as
+        X-User-Token / X-User-Email headers required by the admin API.
         """
         url     = "https://api.goteamhub.com/api/sessions"
         payload = {
@@ -82,7 +94,9 @@ class ApiClient:
         response.raise_for_status()
 
         token = response.json()["user"]["token"]
-        self._headers["Authorization"] = f"Bearer {token}"
+        self._headers["Content-Type"]  = "application/json"
+        self._headers["X-User-Email"]  = self._api_cfg["teamhub_email"]
+        self._headers["X-User-Token"]  = token
         print("Auth set: GoTeamHub token fetched successfully.")
 
     def auth_oauth2_client_credentials(self, token_url: str, client_id: str, client_secret: str, scope: str = ""):
@@ -225,16 +239,17 @@ class ApiClient:
         sql      = f"""
         IF NOT EXISTS (
             SELECT * FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = '{self.table_name}'
+            WHERE TABLE_SCHEMA = '{self.schema}'
+              AND TABLE_NAME   = '{self.table_name}'
         )
-        CREATE TABLE [{self.table_name}] (
-            [id] INT IDENTITY(1,1) PRIMARY KEY,
+        CREATE TABLE [{self.schema}].[{self.table_name}] (
+            [api_client_id] INT IDENTITY(1,1) PRIMARY KEY,
             {cols_sql}
         )
         """
         self._cursor.execute(sql)
         self._conn.commit()
-        print(f"Table '{self.table_name}' created (or already exists).")
+        print(f"Table '[{self.schema}].[{self.table_name}]' created (or already exists).")
 
     def insert_rows(self, rows: list):
         """
@@ -251,7 +266,7 @@ class ApiClient:
         cols         = list(rows[0].keys())
         col_names    = ", ".join(f"[{c}]" for c in cols)
         placeholders = ", ".join("?" for _ in cols)
-        sql          = f"INSERT INTO [{self.table_name}] ({col_names}) VALUES ({placeholders})"
+        sql          = f"INSERT INTO [{self.schema}].[{self.table_name}] ({col_names}) VALUES ({placeholders})"
 
         for row in rows:
             values = [
@@ -262,9 +277,34 @@ class ApiClient:
             self._cursor.execute(sql, values)
 
         self._conn.commit()
-        print(f"{len(rows)} rows inserted into '{self.table_name}'.")
+        print(f"{len(rows)} rows inserted into '[{self.schema}].[{self.table_name}]'.")
 
-    def run(self, rows: list):
-        """Creates the table (if needed) and inserts all rows."""
+    def truncate_table(self):
+        """Truncates the target table if it exists. Resets IDENTITY counter."""
+        if not self.table_name:
+            raise ValueError("table_name is not set.")
+        sql = f"""
+        IF EXISTS (
+            SELECT * FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = '{self.schema}'
+              AND TABLE_NAME   = '{self.table_name}'
+        )
+        TRUNCATE TABLE [{self.schema}].[{self.table_name}]
+        """
+        self._cursor.execute(sql)
+        self._conn.commit()
+        print(f"Table '[{self.schema}].[{self.table_name}]' truncated.")
+
+    def run(self, rows: list, truncate: bool = False):
+        """
+        Creates the table (if needed) and inserts all rows.
+
+        Args:
+            rows:     List of rows to insert.
+            truncate: If True, truncates the table before inserting.
+                      Use for full refreshes. Default is False (append).
+        """
         self.create_table(rows)
+        if truncate:
+            self.truncate_table()
         self.insert_rows(rows)
