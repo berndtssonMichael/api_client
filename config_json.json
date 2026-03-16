@@ -1,0 +1,20 @@
+{
+    "database": {
+        "driver": "ODBC Driver 18 for SQL Server",
+        "server": "localhost,1433",
+        "database": "mydb",
+        "username": "sa",
+        "password": "yourPassword",
+        "trust_server_certificate": true
+    },
+    "api": {
+        "base_url": "https://api.example.com",
+        "auth_type": "teamhub",
+        "api_key": "",
+        "bearer_token": "",
+        "basic_username": "",
+        "basic_password": "",
+        "teamhub_email": "your@email.com",
+        "teamhub_password": "yourPassword"
+    }
+}
