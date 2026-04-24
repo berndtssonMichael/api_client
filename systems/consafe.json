@@ -1,0 +1,19 @@
+{
+  "base_url": "https://test-api.solidwms.com/api/v2/",
+  "schema": "astro",
+  "auth": {
+    "type": "astro",
+    "email": "${ASTRO_EMAIL}",
+    "password": "${ASTRO_PASSWORD}"
+  },
+  "endpoints": {
+    "articles": {
+      "path": "customer/1/article/search",
+      "row_key": "result",
+      "pagination": "count",
+      "pages_key": "page",
+      "table": "articles",
+      "truncate": true
+    }
+  }
+}

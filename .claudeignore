@@ -1,2 +1,2 @@
-# Local config files with secrets – one per source system folder
-**/config.json
+# Secrets
+.env

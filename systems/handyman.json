@@ -1,0 +1,37 @@
+{
+  "base_url": "https://lundatech-azne.lunda.tech/api/connect/read/",
+  "schema": "handyman",
+  "auth": {
+    "type": "oauth2_client_credentials",
+    "token_url": "https://lundatech-azne.lunda.tech/api/connect/lundatech/se_watt_och_volt/production/token",
+    "client_id": "${HANDYMAN_CLIENT_ID}",
+    "client_secret": "${HANDYMAN_CLIENT_SECRET}",
+    "scope": "odata"
+  },
+  "endpoints": {
+    "suppliers": {
+      "path": "HandyMan_VismaAdmin_Suppliers",
+      "pagination": "none",
+      "table": "suppliers",
+      "truncate": true
+    },
+    "articles": {
+      "path": "HandyMan_VismaAdmin_Articles",
+      "pagination": "none",
+      "table": "articles",
+      "truncate": true
+    },
+    "articles_accounts": {
+      "path": "HandyMan_VismaAdmin_ArticlesAccounts",
+      "pagination": "none",
+      "table": "articles_accounts",
+      "truncate": true
+    },
+    "pricelist": {
+      "path": "HandyMan_VismaAdmin_Pricelist",
+      "pagination": "none",
+      "table": "pricelist",
+      "truncate": true
+    }
+  }
+}

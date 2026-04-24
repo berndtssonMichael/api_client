@@ -1,0 +1,39 @@
+{
+  "base_url": "https://admin.goteamhub.com/api/organizations/803/",
+  "schema": "teamhub",
+  "auth": {
+    "type": "teamhub",
+    "email": "${TEAMHUB_EMAIL}",
+    "password": "${TEAMHUB_PASSWORD}"
+  },
+  "endpoints": {
+    "projects": {
+      "path": "projects?per_page=1000",
+      "row_key": "projects",
+      "pagination": "header",
+      "table": "projects",
+      "truncate": true
+    },
+    "users": {
+      "path": "users?&per_page=1000",
+      "row_key": "users",
+      "pagination": "header",
+      "table": "users",
+      "truncate": true
+    },
+    "time_types": {
+      "path": "time_types?&per_page=1000",
+      "row_key": "time_types",
+      "pagination": "header",
+      "table": "time_types",
+      "truncate": true
+    },
+    "records": {
+      "path": "records/logs?from_date={today_minus_60d}&per_page=1000",
+      "row_key": "logs",
+      "pagination": "header",
+      "table": "bookings",
+      "truncate": true
+    }
+  }
+}
